@@ -1,56 +1,65 @@
 import java.io.DataOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 public class CORE 
 {
-   // private String ipAddress;
-    private static ArrayList<String> clientIPs = new ArrayList<String>();
-
-    private static ArrayList<DataOutputStream> theClientDOSsss= new ArrayList<DataOutputStream>();
-
-    public synchronized static void addDOS(DataOutputStream dos)
-    {
-        CORE.theClientDOSsss.add(dos);
-    }
+    private static ArrayList<String> theConnectedClientIPs = new ArrayList<String>();
+    private static ArrayList<PrintStream> theClientPrintStreams = new ArrayList<PrintStream>();
+    private static int currentClientPort = 3000;
     
-    public synchronized static void addIP(String ipAddress)
+    public static synchronized void addPrintStream(PrintStream ps)
     {
-        
-        
-        clientIPs.add(ipAddress);
-
+        CORE.theClientPrintStreams.add(ps);
     }
-    
-    public static synchronized void removeReceivers()
+
+    static public synchronized int getNextClientPort()
     {
-        for(DataOutputStream dos : CORE.theClientDOSsss)
+        return CORE.currentClientPort++;
+    }
+
+    public static void broadcastStringToClients(String s)
+    {
+        for(PrintStream ps : CORE.theClientPrintStreams)
         {
-            try {
-                dos.close();
-            } catch (Exception e) {
-                //TODO: handle exception
-            }
-            
+            ps.println(s);
         }
-        CORE.theClientDOSsss.clear();
     }
 
-    public synchronized static void broadCastByte(byte b)
+    public static String getConnectedClientIPsString()
     {
-        try
+        String answer = "";
+        for(int i = 0; i < CORE.theConnectedClientIPs.size(); i++)
         {
-            for(DataOutputStream dos : CORE.theClientDOSsss)
+            if(answer.length()==0)
             {
-                dos.writeByte(b);
+                answer = answer + CORE.theConnectedClientIPs.get(i);
+            }
+            else
+            {
+                answer = answer + "," + CORE.theConnectedClientIPs.get(i);
             }
         }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
+        return answer;
     }
-    public synchronized static ArrayList<String> getList()
+
+    public static synchronized void changeConnectedClientIPs(String ip, boolean shouldAdd)
     {
-        return clientIPs;
+        //if shouldAdd is true, we are adding the ip, else we are removing the IP
+        if(shouldAdd)
+        {
+            CORE.theConnectedClientIPs.add(ip);
+        }
+        else
+        {
+            for(int i = 0; i < CORE.theConnectedClientIPs.size(); i++)
+            {
+                if(CORE.theConnectedClientIPs.get(i).equals(ip))
+                {
+                    CORE.theConnectedClientIPs.remove(i);
+                    return;
+                }
+            }
+        }
     }
 }

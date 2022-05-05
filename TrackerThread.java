@@ -1,14 +1,10 @@
+import java.io.PrintStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.net.InetAddress;
-
-
+import java.util.Scanner;
 
 public class TrackerThread extends Thread
 {
     private Socket theClient;
-    private String ipAdd;
 
     public TrackerThread(Socket theClient)
     {
@@ -20,33 +16,25 @@ public class TrackerThread extends Thread
         System.out.println("Tracker Thread Started....");
         try
         {
-            InetAddress ipAdresses = InetAddress.getLocalHost();
-            ipAdd = ipAdresses.getHostAddress();
-            //System.out.println("Your IP: " + ipAdd);
+            Scanner clientInput = new Scanner(this.theClient.getInputStream());
+            PrintStream clientOutput = new PrintStream(this.theClient.getOutputStream());
+            String newClientIP = clientInput.nextLine();
+            int newClientPortNumber = CORE.getNextClientPort();
+            clientOutput.println(newClientPortNumber);
+            String newClientIP_Port = newClientIP + ":" + newClientPortNumber;
+            CORE.changeConnectedClientIPs(newClientIP_Port, true);
+            String connectedClients = CORE.getConnectedClientIPsString();
+            clientOutput.println(connectedClients);
+            CORE.broadcastStringToClients(connectedClients);
+            CORE.addPrintStream(clientOutput);
 
-            CORE.addIP(ipAdd);
-
-
-            ArrayList<String> cIPs = CORE.getList();
-
-            System.out.println("All Clients: " + cIPs);
-            System.out.println("Done");
-
-
+            while(true){}
+            //get the IP address of our connect client
+            //add it to our list of peers, then broadcast
+            //the current list of peers to this connected client
+            //as well as all previous clients
         }
-        catch (UnknownHostException e)
-        {
-
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        
-
-        //get the IP address of our connect client
-        //add it to our list of peers, then broadcast
-        //the current list of peers to this connected client
-        //as well as all previous clients
+        catch(Exception e){}
+       
     }
 }

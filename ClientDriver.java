@@ -1,15 +1,9 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Scanner;
+
+
 
 public class ClientDriver 
 {
@@ -20,32 +14,28 @@ public class ClientDriver
     public static void main(String[] args) throws Exception
     {
         Socket s = new Socket(TRACKERIP, TRACKERPORT);
-        //needs to tell the tracker about his IP address
-       // InetAddress my_localhost = InetAddress.getLocalHost();
-       // System.out.println("The IP Address is: " + (my_localhost.getHostAddress()).trim());
-       // String ip_address = "";
-        try
+        Scanner socketInput = new Scanner(s.getInputStream());
+        Scanner clientInput = new Scanner(System.in);
+
+        PrintStream socketOutput = new PrintStream(s.getOutputStream());
+        socketOutput.println(Inet4Address.getLocalHost().getHostAddress());
+        String myPortNumber = socketInput.nextLine();
+        String listOfConnectedClients = socketInput.nextLine();
+        ClientCORE.updateTheConnectedClientIPs(listOfConnectedClients);
+        
+        //maintain the connection with the tracker to get updates on
+        //connected clients
+        (new ClientTrackerListennerThread(socketInput)).start();
+        
+        //create a server thread to establish connections with the Swarm
+        (new ClientServerThread(Integer.parseInt(myPortNumber))).start();
+        socketOutput.println(clientInput.nextLine());
+
+        //In our main thread here, we want to start the torrent process of sharing bits
+        while(true)
         {
-            InetAddress ipAdresses = InetAddress.getLocalHost();
-            String ipAddress = ipAdresses.getHostAddress();
-            System.out.println(ipAddress);
-            CORE.addIP(ipAddress);
-
+            System.out.println(socketInput.nextLine());
         }
-        catch (UnknownHostException e)
-        {
-
-        }
-       
-        //System.out.println(Inet4Address.getLocalHost().getHostAddress());
-
-        /*
-        String torrentName = "cambria.jpeg";
-        PrintStream textOutputOverSocket = new PrintStream(s.getOutputStream());
-        textOutputOverSocket.println(torrentName);
-        textOutputOverSocket.println("ip address") //HOW DO WE GET OUT IP!!!!!!
-        textOutputOverSocket.println("" + ClientCORE.getNextPortNumber());
-        */
+        
     }
-    
 }
